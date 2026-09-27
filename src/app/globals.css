@@ -1,0 +1,327 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Velvet Vine design tokens
+   ------------------------------------------------------------------ */
+@theme {
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ivory: #fbf8f4;
+  --color-cream: #f5eee6;
+  --color-sand: #ebe0d4;
+  --color-blush: #f1dfd8;
+  --color-rose: #c98f8c;
+  --color-velvet: #9d4552;
+  --color-velvet-dark: #83363f;
+  --color-mocha: #7a5c4f;
+  --color-ink: #2a1f1b;
+  --color-muted: #7b6a63;
+  --color-line: #e7dbd0;
+  --color-gold: #b89b6a;
+
+  --radius-card: 1.25rem;
+  --radius-hero: 1.75rem;
+
+  --shadow-soft: 0 1px 2px rgb(42 31 27 / 0.04), 0 4px 16px -6px rgb(42 31 27 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(42 31 27 / 0.05), 0 16px 32px -12px rgb(42 31 27 / 0.18);
+
+  /* Animation timing system (see src/lib/motion.ts) */
+  --ease-vv: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-micro: 190ms;
+  --duration-fast: 250ms;
+  --duration-normal: 350ms;
+  --duration-medium: 550ms;
+  --duration-slow: 1200ms;
+
+  --animate-shimmer: vv-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes vv-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  ::selection {
+    background: var(--color-blush);
+    color: var(--color-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-velvet);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Page gutter + max width shared by all sections */
+  .container-vv {
+    width: 100%;
+    max-width: 1680px;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-vv { padding-inline: 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .container-vv { padding-inline: 2rem; }
+  }
+  @media (min-width: 1536px) {
+    .container-vv { padding-inline: 3rem; }
+  }
+
+  /* Animated underline for text links (left → right) */
+  .link-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-fast) var(--ease-vv);
+  }
+  .link-underline:hover::after,
+  .link-underline:focus-visible::after,
+  .link-underline[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+  .link-underline-fast::after {
+    transition-duration: 200ms;
+  }
+
+  /* Shimmer placeholder used behind images and in skeletons */
+  .skeleton {
+    background: linear-gradient(
+      100deg,
+      var(--color-cream) 30%,
+      #faf5ef 50%,
+      var(--color-cream) 70%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /* Long-form copy (about, legal pages) */
+  .prose-vv {
+    color: rgb(42 31 27 / 0.8);
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+  .prose-vv h2 {
+    margin-top: 2.5rem;
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+  .prose-vv p,
+  .prose-vv ul {
+    margin-top: 1rem;
+  }
+  .prose-vv ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+  .prose-vv li + li {
+    margin-top: 0.4rem;
+  }
+  .prose-vv li::marker {
+    color: var(--color-rose);
+  }
+  .prose-vv a {
+    color: var(--color-velvet);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   View transitions (React <ViewTransition> + browser API)
+   ------------------------------------------------------------------ */
+
+/* Clicks pass through to the live page while a transition runs */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Page enter / exit: almost invisible fade + 10px rise */
+::view-transition-old(.page-exit) {
+  animation: 150ms ease-out both vv-fade-out;
+}
+::view-transition-new(.page-enter) {
+  animation: 350ms var(--ease-vv) 60ms both vv-fade-up;
+}
+
+/* Shared-element morph (product card → product page, etc.) */
+::view-transition-group(.morph) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--ease-vv);
+  /* The new page's snapshot is stacked after the morph (it only exists in the
+     new state), and its opaque image placeholder would cover the flying image
+     until the transition ends. Keep morphs above the page layers. */
+  z-index: 50;
+  /* Snapshots can paint slightly outside their box; never let the moving
+     image spill past the frame it is travelling in. */
+  overflow: clip;
+}
+/* Both snapshots fill the moving frame and crop to it, so a portrait card
+   can grow into a landscape hero without stretching. */
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Hand off quickly to the sharp destination image instead of crossfading a
+   small, upscaled thumbnail for the whole movement. */
+::view-transition-old(.morph) {
+  animation: 160ms ease-out both vv-fade-out;
+}
+::view-transition-new(.morph) {
+  animation: 160ms ease-out both vv-fade-in;
+  /* Crop from the left while the frame is still narrower than the target:
+     the right edge (and its rounded corner) stays put and the left side —
+     including any fade — is revealed progressively instead of popping in. */
+  object-position: right center;
+}
+
+/* Keep the header, tab bar and Connect button anchored above page content */
+::view-transition-group(site-header),
+::view-transition-group(tab-bar),
+::view-transition-group(connect-fab) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header),
+::view-transition-old(tab-bar),
+::view-transition-old(connect-fab) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(tab-bar),
+::view-transition-new(connect-fab) {
+  animation: none;
+}
+
+/* ------------------------------------------------------------------
+   Welcome splash (first visit)
+   ------------------------------------------------------------------ */
+.vv-splash {
+  display: none;
+}
+html[data-welcome] .vv-splash {
+  display: flex;
+}
+html[data-welcome] body {
+  overflow: hidden;
+}
+.vv-rise {
+  animation: 700ms var(--ease-vv) both vv-fade-up-lg;
+}
+.vv-draw {
+  stroke-dasharray: 1;
+  animation: 1600ms var(--ease-vv) both vv-draw;
+}
+/* Gentle bob for decorative stickers */
+.vv-float {
+  animation: 4s ease-in-out infinite vv-float;
+}
+@keyframes vv-float {
+  50% { transform: translateY(-8px); }
+}
+@keyframes vv-fade-up-lg {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+@keyframes vv-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes vv-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vv-fade-in {
+  from { opacity: 0; }
+}
+@keyframes vv-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ------------------------------------------------------------------
+   Reduced motion: drop movement and morphs, keep simple fades
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* Tailwind v4 hover lifts/zooms use the individual translate/scale
+     properties, so neutralising them removes movement while colour and
+     opacity transitions still play. (Never use these utilities for static
+     positioning.) Motion components are handled by <MotionConfig reducedMotion="user">. */
+  *,
+  *::before,
+  *::after {
+    translate: none !important;
+    scale: none !important;
+  }
+  .skeleton {
+    animation: none;
+  }
+  .vv-rise {
+    animation-name: vv-fade-in;
+  }
+  .vv-draw,
+  .vv-float {
+    animation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+  ::view-transition-old(.page-exit) {
+    animation: 120ms ease both vv-fade-out !important;
+  }
+  ::view-transition-new(.page-enter) {
+    animation: 200ms ease both vv-fade-in !important;
+  }
+}
