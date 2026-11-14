@@ -18,23 +18,58 @@ const rise = (delay: number) => ({ style: { animationDelay: `${delay}ms` } });
 export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const skipRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (mode === "page" || document.documentElement.dataset.welcome) buttonRef.current?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
-  }, [mode]);
-
-  const start = () => {
+  const dismiss = () => {
     try {
       window.localStorage.setItem(WELCOMED_KEY, "1");
     } catch {
       // Private mode: the splash simply shows again next visit.
     }
-    if (mode === "page") return router.push("/");
+
+    if (typeof document !== "undefined") {
+      document.documentElement.removeAttribute("data-welcome");
+      try {
+        delete document.documentElement.dataset.welcome;
+      } catch {}
+      document.body.style.overflow = "";
+    }
+
+    if (mode === "page") {
+      router.push("/");
+      return;
+    }
+
     setLeaving(true);
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setTimeout(() => delete document.documentElement.dataset.welcome, reduce ? 0 : 450);
+    setDismissed(true);
   };
+
+  useEffect(() => {
+    const btn = buttonRef.current;
+    const skip = skipRef.current;
+
+    const handleNativeClick = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dismiss();
+    };
+
+    btn?.addEventListener("click", handleNativeClick);
+    skip?.addEventListener("click", handleNativeClick);
+
+    if (mode === "page" || document.documentElement.dataset.welcome) {
+      btn?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+    }
+
+    return () => {
+      btn?.removeEventListener("click", handleNativeClick);
+      skip?.removeEventListener("click", handleNativeClick);
+    };
+  }, [mode]);
+
+  if (dismissed && mode === "overlay") return null;
 
   return (
     <div
@@ -42,7 +77,7 @@ export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
       aria-modal="true"
       aria-labelledby="welcome-title"
       className={cn(
-        "fixed inset-0 z-[70] items-center justify-center overflow-y-auto transition-[opacity,scale] duration-[450ms] ease-[var(--ease-vv)]",
+        "fixed inset-0 z-[70] items-center justify-center overflow-y-auto transition-[opacity,scale] duration-[350ms] ease-[var(--ease-vv)]",
         mode === "overlay" ? "vv-splash" : "flex",
         leaving && "pointer-events-none scale-[1.02] opacity-0",
       )}
@@ -50,7 +85,7 @@ export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
       {/* Silk: layered sheen gradients on warm ivory */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-[#f6efe6]"
+        className="pointer-events-none absolute inset-0 bg-[#f6efe6]"
         style={{
           backgroundImage: [
             "radial-gradient(120% 60% at 15% 10%, rgb(255 255 255 / 0.9), transparent 60%)",
@@ -62,7 +97,7 @@ export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
         }}
       />
       {/* Gold ribbon strokes */}
-      <svg aria-hidden viewBox="0 0 400 800" preserveAspectRatio="none" className="absolute inset-0 size-full text-gold/60">
+      <svg aria-hidden viewBox="0 0 400 800" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 size-full text-gold/60">
         <path d="M-20 90 C 90 20, 200 160, 420 40" fill="none" stroke="currentColor" strokeWidth="1.2" pathLength={1} vectorEffect="non-scaling-stroke" className="vv-draw" />
         <path d="M-20 110 C 110 50, 210 190, 420 70" fill="none" stroke="currentColor" strokeWidth="0.6" pathLength={1} vectorEffect="non-scaling-stroke" className="vv-draw" style={{ animationDelay: "150ms" }} />
         <path d="M-20 700 C 120 640, 260 780, 420 690" fill="none" stroke="currentColor" strokeWidth="0.9" pathLength={1} vectorEffect="non-scaling-stroke" className="vv-draw" style={{ animationDelay: "300ms" }} />
@@ -82,15 +117,16 @@ export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
 
       {mode === "overlay" && (
         <button
+          ref={skipRef}
           type="button"
-          onClick={start}
-          className="absolute right-5 top-5 z-10 sm:right-8 sm:top-8 rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-white/60 hover:text-ink"
+          onClick={dismiss}
+          className="absolute right-5 top-5 z-30 sm:right-8 sm:top-8 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-white/60 hover:text-ink"
         >
           Skip
         </button>
       )}
 
-      <div className="relative flex min-h-full w-full max-w-sm flex-col items-center justify-center px-8 py-14 text-center">
+      <div className="relative z-20 flex min-h-full w-full max-w-sm flex-col items-center justify-center px-8 py-14 text-center">
 
         {/* Crest */}
         <svg {...rise(0)} aria-hidden viewBox="0 0 40 16" className="vv-rise h-9 w-24 text-gold" fill="none" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round">
@@ -120,9 +156,9 @@ export function WelcomeScreen({ mode }: { mode: "overlay" | "page" }) {
         <button
           ref={buttonRef}
           type="button"
-          onClick={start}
+          onClick={dismiss}
           {...rise(440)}
-          className="vv-rise group mt-10 inline-flex w-full max-w-64 items-center justify-center gap-2 rounded-full bg-gold px-8 py-3.5 text-sm font-medium text-white shadow-[0_14px_30px_-12px_rgb(184_155_106/0.95)] transition-[background-color,translate] duration-250 hover:-translate-y-0.5 hover:bg-mocha"
+          className="vv-rise group relative z-30 mt-10 inline-flex w-full max-w-64 cursor-pointer items-center justify-center gap-2 rounded-full bg-gold px-8 py-3.5 text-sm font-medium text-white shadow-[0_14px_30px_-12px_rgb(184_155_106/0.95)] transition-[background-color,translate] duration-250 hover:-translate-y-0.5 hover:bg-mocha"
         >
           Get Started
           <ArrowRight aria-hidden className="size-4 transition-transform duration-250 group-hover:translate-x-1" />

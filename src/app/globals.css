@@ -325,3 +325,90 @@ html[data-welcome] body {
     animation: 200ms ease both vv-fade-in !important;
   }
 }
+
+
+/* ------------------------------------------------------------------
+   Sticky Stage Hero & Motion Additions
+   ------------------------------------------------------------------ */
+.hero-stage__copy {
+  opacity: calc(1 - var(--p, 0) * 3.2);
+  transform: translateY(calc(var(--p, 0) * -16vh)) scale(calc(1 - var(--p, 0) * 0.2));
+  will-change: transform, opacity;
+}
+
+.hero-stage__card {
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  width: var(--w, 180px);
+  height: var(--h, 240px);
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) rotate(var(--rot, 0deg));
+  opacity: var(--o, 1);
+  will-change: transform, opacity;
+  transition: opacity 0.8s ease;
+}
+
+.hero-stage__main {
+  clip-path: inset(var(--ct, 35%) var(--cr, 35%) var(--cb, 15%) var(--cl, 35%) round var(--cr-r, 1.25rem));
+  will-change: clip-path;
+}
+
+.hero-stage__main-img {
+  object-position: 50% 25%;
+  transform: scale(var(--is, 1.28));
+  will-change: transform;
+}
+
+.hero-stage__main::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(20, 14, 12, 0.75));
+  opacity: var(--ov, 0);
+  pointer-events: none;
+}
+
+.hero-stage__overlay {
+  opacity: var(--ov, 0);
+  transform: translateY(calc((1 - var(--ov, 0)) * 2.5rem));
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.hero-stage__overlay.is-active {
+  pointer-events: auto;
+}
+
+.hero-stage__hint {
+  opacity: calc(1 - var(--p, 0) * 5);
+}
+
+/* Roll text animation */
+.roll-text {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+}
+.roll-text__a,
+.roll-text__b {
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.roll-text__b {
+  position: absolute;
+  inset: 0;
+  font-style: italic;
+  transform: translateY(105%);
+}
+a:hover .roll-text__a,
+button:hover .roll-text__a,
+a:focus-visible .roll-text__a,
+button:focus-visible .roll-text__a {
+  transform: translateY(-105%);
+}
+a:hover .roll-text__b,
+button:hover .roll-text__b,
+a:focus-visible .roll-text__b,
+button:focus-visible .roll-text__b {
+  transform: translateY(0);
+}

@@ -1,5 +1,6 @@
 import { PageTransition } from "@/components/layout/PageTransition";
 import { HeroSection } from "@/components/home/HeroSection";
+import { StickyStageHero } from "@/components/home/StickyStageHero";
 import { MobileHome } from "@/components/home/MobileHome";
 import { SelfLoveQuote } from "@/components/home/SelfLoveQuote";
 import { WelcomeScreen } from "@/components/welcome/WelcomeScreen";
@@ -27,10 +28,13 @@ export default function HomePage() {
       {/* First-visit splash (shown by the boot script in the root layout) */}
       <WelcomeScreen mode="overlay" />
 
-      {/* Phones get an app-style home; tablets and desktops the editorial hero */}
+      {/* Phones get an app-style home; tablets and desktops get the editorial hero and sticky stage */}
       <MobileHome />
       <div className="hidden md:block">
-        <HeroSection />
+        <StickyStageHero />
+        <div className="mt-8">
+          <HeroSection />
+        </div>
       </div>
 
       <section aria-label="Categories" className="container-vv mt-8 hidden sm:mt-10 md:block">

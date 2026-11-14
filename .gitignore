@@ -12,14 +12,18 @@
 /.next/
 /out/
 /build
+/dist
 
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
-# Environment variables (keep a committed .env.example for reference)
+# Environment variables
 .env
-.env*
+.env*.local
+.env.development
+.env.test
+.env.production
 !.env.example
 
 # Vercel
@@ -40,24 +44,32 @@ yarn-error.log*
 pnpm-debug.log*
 .pnpm-debug.log*
 
-# Misc
+# Caches and temporary files
 *.pem
 .cache/
 .turbo/
 .eslintcache
 
-# OS files
+# Operating System files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Editors
+# IDEs and Editors
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
 .idea/
 *.swp
 *.swo
+*~
 
-# Local Claude Code settings (shared project settings in .claude/settings.json stay tracked)
-.claude/settings.local.json
+# AI and Agent files
+AGENTS.md
+CLAUDE.md
+.claude/
