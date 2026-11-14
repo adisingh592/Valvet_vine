@@ -330,6 +330,10 @@ html[data-welcome] body {
 /* ------------------------------------------------------------------
    Sticky Stage Hero & Motion Additions
    ------------------------------------------------------------------ */
+html[data-stage-completed] .hero-stage {
+  display: none !important;
+}
+
 .hero-stage__copy {
   opacity: calc(1 - var(--p, 0) * 3.2);
   transform: translateY(calc(var(--p, 0) * -16vh)) scale(calc(1 - var(--p, 0) * 0.2));

@@ -32,9 +32,7 @@ export default function HomePage() {
       <MobileHome />
       <div className="hidden md:block">
         <StickyStageHero />
-        <div className="mt-8">
-          <HeroSection />
-        </div>
+        <HeroSection />
       </div>
 
       <section aria-label="Categories" className="container-vv mt-8 hidden sm:mt-10 md:block">

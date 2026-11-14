@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { STAGE_COMPLETED_KEY } from "@/lib/welcome";
 
 export interface LookCard {
   slot: number;
@@ -27,6 +28,9 @@ const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
 export function StickyStageHero() {
+  const [dismissed, setDismissed] = useState(false);
+  const dismissedRef = useRef(false);
+
   const heroRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -34,7 +38,55 @@ export function StickyStageHero() {
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
   const geo = useRef<{ w: number; h: number; left: number; top: number } | null>(null);
 
+  // Check if previously completed in this session
   useEffect(() => {
+    try {
+      if (
+        sessionStorage.getItem(STAGE_COMPLETED_KEY) === "1" ||
+        document.documentElement.dataset.stageCompleted === "1"
+      ) {
+        setDismissed(true);
+        dismissedRef.current = true;
+      }
+    } catch {}
+  }, []);
+
+  const dismissStage = (options?: { adjustScroll?: boolean }) => {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+
+    try {
+      sessionStorage.setItem(STAGE_COMPLETED_KEY, "1");
+    } catch {}
+
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.stageCompleted = "1";
+    }
+
+    const el = heroRef.current;
+    if (el) {
+      const h = el.offsetHeight;
+      const y = window.scrollY;
+
+      // Hide immediately in the DOM
+      el.style.display = "none";
+
+      // Adjust scroll offset seamlessly so the viewport content below doesn't jump
+      if (options?.adjustScroll !== false && h > 0) {
+        const targetScroll = Math.max(0, y - h);
+        window.scrollTo({
+          top: targetScroll,
+          behavior: "instant",
+        });
+      }
+    }
+
+    setDismissed(true);
+  };
+
+  useEffect(() => {
+    if (dismissed) return;
+
     const layout = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -62,12 +114,14 @@ export function StickyStageHero() {
     layout();
     window.addEventListener("resize", layout, { passive: true });
     return () => window.removeEventListener("resize", layout);
-  }, []);
+  }, [dismissed]);
 
   useEffect(() => {
+    if (dismissed) return;
     let rafId: number;
 
     const onScroll = () => {
+      if (dismissedRef.current) return;
       if (!heroRef.current || !stickyRef.current || !mainRef.current || !overlayRef.current || !geo.current) {
         return;
       }
@@ -76,7 +130,14 @@ export function StickyStageHero() {
       const span = r.height - vh;
       const p = span > 0 ? clamp(-r.top / span) : 0;
 
-      if (r.bottom < 0 || r.top > vh) return;
+      // Once the user has scrolled through and the stage exits the top of the viewport:
+      // completely dismiss it so it disappears and never reappears even when scrolling up.
+      if (r.bottom <= 0) {
+        dismissStage({ adjustScroll: true });
+        return;
+      }
+
+      if (r.top > vh) return;
 
       const { w, h, left, top } = geo.current;
       const e = easeInOut(clamp(p / 0.62));
@@ -113,7 +174,9 @@ export function StickyStageHero() {
     rafId = requestAnimationFrame(loop);
 
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [dismissed]);
+
+  if (dismissed) return null;
 
   return (
     <section ref={heroRef} className="hero-stage relative h-[300vh]" aria-label="Velvet Vine Cinematic Stage">
@@ -169,7 +232,7 @@ export function StickyStageHero() {
             className="hero-stage__overlay absolute inset-x-6 sm:inset-x-12 bottom-12 sm:bottom-16 z-20 flex flex-col items-start gap-4 max-w-2xl text-ivory"
           >
             <span className="text-xs uppercase tracking-[0.25em] text-rose font-medium">
-              Autumn â€” Winter 2026
+              Autumn — Winter 2026
             </span>
             <h2 className="font-serif font-light text-3xl sm:text-5xl lg:text-6xl leading-tight">
               The Collection <em className="italic text-rose">has arrived.</em>
@@ -177,6 +240,7 @@ export function StickyStageHero() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href="/collections"
+                onClick={() => dismissStage({ adjustScroll: false })}
                 className="inline-flex items-center gap-2 rounded-full bg-ivory px-6 py-3 text-sm font-medium text-ink transition-transform hover:scale-105"
               >
                 Explore Collection
@@ -184,10 +248,18 @@ export function StickyStageHero() {
               </Link>
               <Link
                 href="/women"
+                onClick={() => dismissStage({ adjustScroll: false })}
                 className="inline-flex items-center gap-2 rounded-full border border-ivory/40 bg-black/20 backdrop-blur-md px-6 py-3 text-sm font-medium text-ivory transition-colors hover:bg-black/40"
               >
                 Shop New Arrivals
               </Link>
+              <button
+                type="button"
+                onClick={() => dismissStage({ adjustScroll: true })}
+                className="inline-flex items-center gap-2 rounded-full border border-ivory/40 bg-black/20 backdrop-blur-md px-5 py-3 text-sm font-medium text-ivory transition-colors hover:bg-black/40 cursor-pointer"
+              >
+                Continue to Store &darr;
+              </button>
             </div>
           </figcaption>
         </figure>
